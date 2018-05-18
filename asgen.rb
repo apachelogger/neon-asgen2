@@ -30,60 +30,42 @@ require_relative '/tooling/ci-tooling/lib/nci'
 TYPE = ENV.fetch('TYPE')
 DIST = ENV.fetch('DIST')
 
+Dir.chdir('asgen')
+
 NCI.setup_repo!
-
-File.open('/etc/apt/sources.list', 'a') do |file|
-  file.write(<<-SOURCES)
-deb http://archive.ubuntu.com/ubuntu/ #{DIST}-backports main restricted universe multiverse
-deb http://archive.ubuntu.com/ubuntu/ #{DIST}-updates main restricted universe multiverse
-  SOURCES
-end
-
-# Enable backports to install by default so we get d-deps from there, otherwise
-# our stack stuffers from outdating.
-pref = Apt::Preference.new('99-backports-enable', content: <<-PREF)
-Package: *
-Pin: release a=#{DIST}-backports
-Pin-Priority: 500
-PREF
-pref.write
 
 # Build
 Apt.update
-Apt.install(%w[meson ldc gir-to-d libappstream-dev libgdk-pixbuf2.0-dev
-               libarchive-dev librsvg2-dev liblmdb-dev libglib2.0-dev
-               libcairo2-dev libcurl4-gnutls-dev libfreetype6-dev
-               libfontconfig1-dev libpango1.0-dev libmustache-d-dev
-               xsltproc docbook-xsl]) || raise
-
-# Run
-Apt.install(%w[npm nodejs-legacy optipng liblmdb0]) || raise
+Apt::Get.install('appstream-generator') # Make sure runtime deps are in.
+Apt::Get.purge('appstream-generator')
+Apt::Get.build_dep('appstream-generator')
 
 cmd = TTY::Command.new
-
-cmd.run(*%w[npm install -g bower])
 
 build_dir = File.absolute_path('build')
 run_dir = File.absolute_path('run')
 
 Dir.mkdir(build_dir) unless File.exist?(build_dir)
 Dir.chdir(build_dir) do
-  cmd.run(*%w[meson -Ddownload_js=true ..])
-  cmd.run(*%w[ninja])
+  cmd.run('meson', '-Ddownload_js=true', '..')
+  cmd.run('ninja')
 end
 
-suite = DIST
+suites = %w[bionic xenial]
+
 config = ASGEN::Conf.new("neon/#{TYPE}")
 config.ArchiveRoot = File.absolute_path('aptly-repository')
 config.MediaBaseUrl = "https://metadata.neon.kde.org/appstream/#{TYPE}/media"
 config.HtmlBaseUrl = "https://metadata.neon.kde.org/appstream/#{TYPE}/html"
 config.Backend = 'debian'
 config.Features['validateMetainfo'] = true
-config.Suites << ASGEN::Suite.new(suite).tap do |s|
-  s.sections = %w[main]
-  s.architectures = %w[amd64]
-  s.dataPriority = 1
-  s.useIconTheme = 'breeze'
+suites.each do |suite|
+  config.Suites << ASGEN::Suite.new(suite).tap do |s|
+    s.sections = %w[main]
+    s.architectures = %w[amd64]
+    s.dataPriority = 1
+    s.useIconTheme = 'breeze'
+  end
 end
 
 # Generate
@@ -92,8 +74,10 @@ end
 Apt.install('breeze-icon-theme', 'hicolor-icon-theme')
 FileUtils.mkpath(run_dir) unless Dir.exist?(run_dir)
 config.write("#{run_dir}/asgen-config.json")
-cmd.run("#{build_dir}/appstream-generator", 'process', suite,
-        chdir: run_dir)
+suites.each do |suite|
+  cmd.run("#{build_dir}/appstream-generator", 'process', suite,
+           chdir: run_dir)
+end
 
 # TODO
 # [15:03] <ximion> sitter: the version number changing isn't an issue -
