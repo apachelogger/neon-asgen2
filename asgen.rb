@@ -29,6 +29,7 @@ require_relative '/tooling/ci-tooling/lib/nci'
 
 TYPE = ENV.fetch('TYPE')
 DIST = ENV.fetch('DIST')
+cmd = TTY::Command.new
 
 Dir.chdir('asgen')
 
@@ -44,8 +45,6 @@ Apt::Get.build_dep('appstream-generator')
 Apt.install(%w[npm optipng liblmdb0]) || raise
 Apt.install(%w[nodejs-legacy]) || Apt.install(%w[nodejs]) || raise
 cmd.run('npm', 'install', '-g', 'bower')
-
-cmd = TTY::Command.new
 
 build_dir = File.absolute_path('build')
 run_dir = File.absolute_path('run')
