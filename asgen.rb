@@ -41,7 +41,8 @@ Apt::Get.purge('appstream-generator')
 Apt::Get.build_dep('appstream-generator')
 
 # Runtime
-Apt.install(%w[npm nodejs-legacy optipng liblmdb0]) || raise
+Apt.install(%w[npm optipng liblmdb0]) || raise
+Apt.install(%w[nodejs-legacy]) || Apt.install(%w[nodejs]) || raise
 cmd.run('npm', 'install', '-g', 'bower')
 
 cmd = TTY::Command.new
