@@ -73,16 +73,19 @@ suites.each do |suite|
   end
 end
 
+# FIXME: http_proxy and friends are possibly not the smartest idea.
+#   this will also route image fetching through the proxy I think, and the proxy
+#   gets grumpy when it has to talk to unknown servers (which the image hosting
+#   will ofc be)
 # Generate
 # Install theme to hopefully override icons with breeze version.
-# TODO: This currently isn't using the actual neon version.
 Apt.install('breeze-icon-theme', 'hicolor-icon-theme')
 FileUtils.mkpath(run_dir) unless Dir.exist?(run_dir)
 config.write("#{run_dir}/asgen-config.json")
 suites.each do |suite|
   cmd.run("#{build_dir}/appstream-generator", 'process', suite,
-          chdir: run_dir,
-          env: { http_proxy: NCI.PROXY_URI, https_proxy: NCI.PROXY_URI })
+          chdir: run_dir)#,
+          # env: { http_proxy: NCI::PROXY_URI, https_proxy: NCI::PROXY_URI })
 end
 
 # TODO
