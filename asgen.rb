@@ -58,7 +58,8 @@ end
 suites = %w[bionic xenial]
 
 config = ASGEN::Conf.new("neon/#{TYPE}")
-config.ArchiveRoot = File.absolute_path('aptly-repository')
+# FIXME: harcoded dev/unstable, need to pass env in from jenkinsfile
+config.ArchiveRoot = 'https://archive.neon.kde.org/dev/unstable/'
 config.MediaBaseUrl = "https://metadata.neon.kde.org/appstream/#{TYPE}/media"
 config.HtmlBaseUrl = "https://metadata.neon.kde.org/appstream/#{TYPE}/html"
 config.Backend = 'debian'
@@ -80,7 +81,8 @@ FileUtils.mkpath(run_dir) unless Dir.exist?(run_dir)
 config.write("#{run_dir}/asgen-config.json")
 suites.each do |suite|
   cmd.run("#{build_dir}/appstream-generator", 'process', suite,
-           chdir: run_dir)
+          chdir: run_dir,
+          env: { http_proxy: NCI.PROXY_URI, https_proxy: NCI.PROXY_URI })
 end
 
 # TODO
