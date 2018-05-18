@@ -14,7 +14,7 @@ node('master') {
             stage('clone[asgen]') {
                 sh '[ -d asgen ] || mkdir asgen'
                 dir('asgen') {
-                    git branch: 'bionic-with-http-fix', url: 'https://github.com/apachelogger/neon-asgen2.git'
+                    git branch: 'bionic-with-http-fix', url: 'https://github.com/apachelogger/appstream-generator.git'
                 }
             }
 
