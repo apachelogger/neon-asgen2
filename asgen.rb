@@ -40,6 +40,10 @@ Apt::Get.install('appstream-generator') # Make sure runtime deps are in.
 Apt::Get.purge('appstream-generator')
 Apt::Get.build_dep('appstream-generator')
 
+# Runtime
+Apt.install(%w[npm nodejs-legacy optipng liblmdb0]) || raise
+cmd.run('npm', 'install', '-g', 'bower')
+
 cmd = TTY::Command.new
 
 build_dir = File.absolute_path('build')
