@@ -27,6 +27,8 @@ require_relative '/tooling/ci-tooling/lib/apt'
 require_relative '/tooling/ci-tooling/lib/asgen'
 require_relative '/tooling/ci-tooling/lib/nci'
 
+STDOUT.sync = true
+
 TYPE = ENV.fetch('TYPE')
 DIST = ENV.fetch('DIST')
 cmd = TTY::Command.new
