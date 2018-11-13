@@ -6,6 +6,9 @@ env.PWD_BIND = '/workspace'
 node('master') {
     wrap([$class: 'TimestamperBuildWrapper']) {
         wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
+            stage('unarchiving') {
+                unarchive
+            }
 
             stage('clone[code]') {
                 checkout scm
@@ -23,6 +26,16 @@ node('master') {
                 sh 'tree asgen/run/' // Debug
             }
 
+            stage('archiving') {
+                archiveArtifacts '*'
+            }
+        }
+    }
+}
+
+node('master') {
+    wrap([$class: 'TimestamperBuildWrapper']) {
+        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
             // stage 'Publish'
             // sh '~/tooling/nci/asgen_push.rb'
             // sh 'mkdir -p /var/www/metadata/appstream/$APTLY_REPOSITORY || true'
