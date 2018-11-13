@@ -6,10 +6,6 @@ env.PWD_BIND = '/workspace'
 node('master') {
     wrap([$class: 'TimestamperBuildWrapper']) {
         wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-            stage('unarchiving') {
-                unarchive
-            }
-
             stage('clone[code]') {
                 checkout scm
             }
@@ -21,28 +17,16 @@ node('master') {
                 }
             }
 
-            stage('processing') {
+            stage('generate') {
                 sh '~/tooling/nci/contain.rb /workspace/asgen.rb'
                 sh 'tree asgen/run/' // Debug
             }
 
-            stage('archiving') {
-                archiveArtifacts '*'
+            stage('publish') {
+                sh '~/tooling/nci/asgen_push.rb'
+                sh 'mkdir -p /var/www/metadata/appstream/$APTLY_REPOSITORY || true'
+                sh 'cp -rv run/export/. /var/www/metadata/appstream/$APTLY_REPOSITORY'
             }
-        }
-    }
-}
-
-node('master') {
-    wrap([$class: 'TimestamperBuildWrapper']) {
-        wrap([$class: 'AnsiColorBuildWrapper', colorMapName: 'xterm']) {
-            // stage 'Publish'
-            // sh '~/tooling/nci/asgen_push.rb'
-            // sh 'mkdir -p /var/www/metadata/appstream/$APTLY_REPOSITORY || true'
-            // sh 'cp -rv run/export/. /var/www/metadata/appstream/$APTLY_REPOSITORY'
-            //
-            // stage 'Cleanup'
-            // sh '#rm -rf aptly-repository'
         }
     }
 }
